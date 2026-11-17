@@ -61,6 +61,18 @@ class RequestRateLimiterTests {
     }
 
     @Test
+    void refreshQuotaIsIndependentFromLoginAndRecoversAfterWindow() {
+        properties.setRefreshRequests(2);
+        var limiter = limiter();
+        assertEquals(0, limiter.acquire("ip", false, true));
+        assertEquals(0, limiter.acquire("ip", false, true));
+        assertEquals(60, limiter.acquire("ip", false, true));
+        assertEquals(0, limiter.acquire("ip", true, false));
+        now.addAndGet(60000);
+        assertEquals(0, limiter.acquire("ip", false, true));
+    }
+
+    @Test
     void concurrentRequestsCannotExceedQuota() throws Exception {
         properties.setRequests(5);
         var limiter = limiter();

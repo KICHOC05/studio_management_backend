@@ -27,7 +27,8 @@ public class RateLimitFilter extends OncePerRequestFilter {
         }
         boolean login = "POST".equals(request.getMethod()) && "/api/auth/login".equals(path);
         // Use the network peer, never an untrusted X-Forwarded-For header.
-        long retryAfter = limiter.acquire(request.getRemoteAddr(), login);
+        boolean refresh = "POST".equals(request.getMethod()) && "/api/auth/refresh".equals(path);
+        long retryAfter = limiter.acquire(request.getRemoteAddr(), login, refresh);
         if (retryAfter > 0) {
             problemHandler.tooManyRequests(request, response, retryAfter);
             return;

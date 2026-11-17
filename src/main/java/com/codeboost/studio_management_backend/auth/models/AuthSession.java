@@ -32,7 +32,8 @@ public class AuthSession {
             columnDefinition = "VARCHAR(255) CHARACTER SET ascii COLLATE ascii_bin")
     private String refreshTokenHash;
 
-    @Column(name = "expires_at", nullable = false, columnDefinition = "DATETIME(6)")
+    // Absolute expiry is assigned at login and must not be extended by future rotations.
+    @Column(name = "expires_at", nullable = false, updatable = false, columnDefinition = "DATETIME(6)")
     private LocalDateTime expiresAt;
 
     @Column(name = "revoked_at", columnDefinition = "DATETIME(6)")

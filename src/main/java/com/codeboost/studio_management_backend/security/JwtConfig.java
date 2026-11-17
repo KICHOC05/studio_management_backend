@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import com.codeboost.studio_management_backend.auth.repositories.RevokedAccessTokenRepository;
+import com.codeboost.studio_management_backend.auth.repositories.AuthSessionRepository;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -41,13 +42,13 @@ public class JwtConfig {
 
     @Bean
     public JwtDecoder jwtDecoder(SecretKey jwtSigningKey, @Value("${app.jwt.issuer}") String issuer,
-                                 RevokedAccessTokenRepository revokedTokens) {
+                                 RevokedAccessTokenRepository revokedTokens, AuthSessionRepository sessions, Clock clock) {
         NimbusJwtDecoder decoder = NimbusJwtDecoder.withSecretKey(jwtSigningKey)
                 .macAlgorithm(MacAlgorithm.HS256).build();
         decoder.setJwtValidator(new DelegatingOAuth2TokenValidator<>(
                 JwtValidators.createDefaultWithIssuer(issuer),
                 new JwtClaimValidator<List<String>>("aud", aud -> aud != null && aud.contains("studio-management-api")),
-                new TokenRevocationValidator(revokedTokens)));
+                new TokenRevocationValidator(revokedTokens, sessions, clock)));
         return decoder;
     }
 

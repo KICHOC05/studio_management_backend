@@ -23,6 +23,8 @@ Cada peticion pasa por un filtro antes de validar el Bearer token. Por defecto:
 - 120 peticiones por IP en una ventana fija de 60 segundos para todas las rutas.
 - 5 POST de login por IP en su propia ventana fija de 60 segundos, incluyendo
   intentos correctos, fallidos y solicitudes invalidas.
+- 10 POST de refresh por IP en su propia ventana fija, tambien incluyendo
+  intentos invalidos o rechazados por CSRF.
 - Login tambien consume el limite general. Otros endpoints no consumen su cuota
   especifica de login.
 
@@ -32,6 +34,7 @@ estos valores en `.env.local` si lo necesitas:
 ```dotenv
 RATE_LIMIT_REQUESTS=120
 RATE_LIMIT_LOGIN_REQUESTS=5
+RATE_LIMIT_REFRESH_REQUESTS=10
 RATE_LIMIT_WINDOW_SECONDS=60
 RATE_LIMIT_MAX_CLIENTS=10000
 ```

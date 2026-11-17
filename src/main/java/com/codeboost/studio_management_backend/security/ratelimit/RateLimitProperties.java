@@ -16,6 +16,8 @@ public class RateLimitProperties {
     @Min(1)
     private int loginRequests = 5;
     @Min(1)
+    private int refreshRequests = 10;
+    @Min(1)
     private int windowSeconds = 60;
     @Min(1)
     private int maxClients = 10000;

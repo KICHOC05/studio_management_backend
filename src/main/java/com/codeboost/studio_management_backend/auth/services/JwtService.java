@@ -30,7 +30,10 @@ public class JwtService {
         this.accessTokenMinutes = accessTokenMinutes;
     }
 
-    public LoginResponse issueToken(AuthenticatedUser user) {
+    public LoginResponse issueToken(AuthenticatedUser user, Long sessionId) {
+        if (sessionId == null || sessionId <= 0) {
+            throw new IllegalArgumentException("El JWT requiere una sesion persistida.");
+        }
         Instant now = clock.instant();
         long expiresIn = accessTokenMinutes * 60;
         JwtClaimsSet claims = JwtClaimsSet.builder()
@@ -41,6 +44,7 @@ public class JwtService {
                 .expiresAt(now.plusSeconds(expiresIn))
                 .id(UUID.randomUUID().toString())
                 .claim("roles", user.roles())
+                .claim("sid", sessionId.toString())
                 .build();
         String token = encoder.encode(JwtEncoderParameters.from(
                 JwsHeader.with(MacAlgorithm.HS256).build(), claims)).getTokenValue();

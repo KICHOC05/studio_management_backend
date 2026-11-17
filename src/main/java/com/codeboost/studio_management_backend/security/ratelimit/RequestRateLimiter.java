@@ -20,13 +20,18 @@ public class RequestRateLimiter {
 
     /** Returns zero when allowed, otherwise the number of seconds before retrying. */
     public synchronized long acquire(String client, boolean login) {
+        return acquire(client, login, false);
+    }
+
+    public synchronized long acquire(String client, boolean login, boolean refresh) {
         long now = clock.millis();
         long duration = properties.getWindowSeconds() * 1000L;
         Window window = clients.get(client);
         if (window == null) {
             // Purge expired entries before admitting a new client at capacity.
             if (clients.size() >= properties.getMaxClients()) {
-                clients.values().removeIf(value -> now >= Math.max(value.expiresAt, value.loginExpiresAt));
+                clients.values().removeIf(value -> now >= Math.max(value.expiresAt,
+                        Math.max(value.loginExpiresAt, value.refreshExpiresAt)));
                 if (clients.size() >= properties.getMaxClients()) {
                     // Fail closed rather than evicting active counters and allowing limit bypass.
                     return properties.getWindowSeconds();
@@ -53,6 +58,16 @@ public class RequestRateLimiter {
             }
             window.loginRequests++;
         }
+        if (refresh) {
+            if (window.refreshExpiresAt == 0 || now >= window.refreshExpiresAt) {
+                window.refreshExpiresAt = now + duration;
+                window.refreshRequests = 0;
+            }
+            if (window.refreshRequests >= properties.getRefreshRequests()) {
+                return retryAfter(window.refreshExpiresAt - now);
+            }
+            window.refreshRequests++;
+        }
         return 0;
     }
 
@@ -65,6 +80,8 @@ public class RequestRateLimiter {
         private long loginExpiresAt;
         private int requests;
         private int loginRequests;
+        private int refreshRequests;
+        private long refreshExpiresAt;
 
         private Window(long expiresAt) {
             this.expiresAt = expiresAt;

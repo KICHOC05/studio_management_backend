@@ -4,6 +4,7 @@ import com.codeboost.studio_management_backend.auth.repositories.UserRepository;
 import com.codeboost.studio_management_backend.auth.repositories.UserRoleRepository;
 import com.codeboost.studio_management_backend.auth.services.AuthService;
 import com.codeboost.studio_management_backend.auth.services.JwtService;
+import com.codeboost.studio_management_backend.auth.services.RefreshTokenService;
 import com.codeboost.studio_management_backend.user.models.User;
 import com.codeboost.studio_management_backend.user.enums.RoleCode;
 import org.junit.jupiter.api.Test;
@@ -58,7 +59,7 @@ class AuthAuthorizationTests {
             alice.setStatus("ACTIVE");
             when(users.findByPublicId("alice")).thenReturn(Optional.of(alice));
             when(roles.findRoleCodesByUserId(1L)).thenReturn(List.of(RoleCode.CLIENT));
-            return new AuthService(users, roles, new BCryptPasswordEncoder(4), mock(JwtService.class));
+            return new AuthService(users, roles, new BCryptPasswordEncoder(4), mock(JwtService.class), mock(RefreshTokenService.class));
         }
     }
 }

@@ -3,6 +3,7 @@ package com.codeboost.studio_management_backend.auth.services;
 import com.codeboost.studio_management_backend.auth.dto.AuthenticatedUser;
 import com.codeboost.studio_management_backend.auth.dto.LoginRequest;
 import com.codeboost.studio_management_backend.auth.dto.LoginResponse;
+import com.codeboost.studio_management_backend.auth.dto.LoginResult;
 import com.codeboost.studio_management_backend.auth.repositories.UserRepository;
 import com.codeboost.studio_management_backend.auth.repositories.UserRoleRepository;
 import com.codeboost.studio_management_backend.user.models.User;
@@ -22,18 +23,22 @@ public class AuthService {
     private final UserRoleRepository userRoles;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final RefreshTokenService refreshTokenService;
     private final String dummyPasswordHash;
 
     public AuthService(UserRepository users, UserRoleRepository userRoles,
-                       PasswordEncoder passwordEncoder, JwtService jwtService) {
+                       PasswordEncoder passwordEncoder, JwtService jwtService,
+                       RefreshTokenService refreshTokenService) {
         this.users = users;
         this.userRoles = userRoles;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
+        this.refreshTokenService = refreshTokenService;
         this.dummyPasswordHash = passwordEncoder.encode(java.util.UUID.randomUUID().toString());
     }
 
-    public LoginResponse login(LoginRequest request) {
+    @Transactional
+    public LoginResult login(LoginRequest request) {
         if (request.password().getBytes(StandardCharsets.UTF_8).length > 72) {
             throw new BadCredentialsException("Credenciales invalidas");
         }
@@ -44,7 +49,9 @@ public class AuthService {
         if (user == null || !validPassword || !"ACTIVE".equals(user.getStatus())) {
             throw new BadCredentialsException("Credenciales invalidas");
         }
-        return jwtService.issueToken(toAuthenticatedUser(user));
+        var refreshToken = refreshTokenService.issueForLogin(user);
+        LoginResponse response = jwtService.issueToken(toAuthenticatedUser(user), refreshToken.sessionId());
+        return new LoginResult(response, refreshToken);
     }
 
     @PreAuthorize("#publicId == authentication.name or hasRole('ADMIN')")

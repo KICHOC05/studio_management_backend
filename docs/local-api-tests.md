@@ -1,9 +1,13 @@
 # Pruebas locales de la API
 
 `security.SecurityConfig` valida JWT en todos los perfiles, incluido `local`.
-Solo `POST /api/auth/login` y `GET /actuator/health` son publicos. Las otras
-rutas requieren `Authorization: Bearer <accessToken>`. La API es stateless,
-sin formulario de login, HTTP Basic ni CSRF. La configuracion anterior que
+Login, GET /api/auth/csrf y GET /actuator/health son publicos. POST /api/auth/refresh
+no requiere Bearer, pero exige la cookie refresh_token y proteccion CSRF.
+POST /api/auth/logout admite refresh cookie o, si esta no existe, Bearer valido;
+siempre exige CSRF. CORS admite solo los origenes de CORS_ALLOWED_ORIGINS.
+Las otras rutas requieren `Authorization: Bearer <accessToken>`. La API es
+stateless respecto al SecurityContext, sin formulario de login ni HTTP Basic.
+La configuracion anterior que
 permitia todas las rutas fue reemplazada por el login JWT.
 
 Consulta `authentication.md` para configurar JWT y el administrador inicial.
